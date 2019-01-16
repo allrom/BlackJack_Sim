@@ -1,11 +1,9 @@
 # Lesson10 (BlackJack) Cards In Player's Hand
 #
-class CardsInHand
+class Hand
   attr_accessor :cards
-  attr_reader :player
 
-  def initialize(player)
-    @player = player
+  def initialize
     @cards = []
   end
 

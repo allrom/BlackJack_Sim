@@ -2,29 +2,25 @@
 #
 class GameTable
   include GameTech
-  include GameService
 
-  attr_reader :interface, :gambler, :dealer, :banker,
-              :gamblers_hand, :dealers_hand, :deck
+  attr_reader :interface, :gambler, :dealer, :banker, :deck
 
   def initialize(interface)
     @interface = interface
     name = interface.greeting
     @gambler = Gambler.new(name)
     @dealer = Dealer.new
-    @gamblers_hand = CardsInHand.new(gambler)
-    @dealers_hand = CardsInHand.new(dealer)
     @banker = Banker.new
   end
 
   def play
-    start_over if credit_check
+    start_over
     gambler_play(:start_menu) while interface.go_on?
   end
 
   def start_over
-    new_gamblers_hand
-    new_dealers_hand
+    gambler.new_hand
+    dealer.new_hand
     banker.getbet
     round_start
   end
@@ -36,34 +32,34 @@ class GameTable
     gambler_your_cards
     dealer_your_cards
 
-    gamblers_score = gamblers_hand.tell_score
+    gamblers_score = gambler.hand.tell_score
     interface.display_score(gambler.name, gamblers_score)
     interface.blackjack(gambler.name) if blackjack?(gamblers_score)
   end
 
   def start_deal
-    deal(2, gambler, gamblers_hand, deck)
-    deal(2, dealer, dealers_hand, deck)
+    deal(2, gambler, gambler.hand, deck)
+    deal(2, dealer, dealer.hand, deck)
   end
 
   def round_end
     interface.showdown
-    showdown(dealers_hand)
+    showdown(dealer)
     gambler_your_cards
     dealer_your_cards
     final_score
 
-    status, winner = who_won(gamblers_hand, dealers_hand)
-    gambler_credit, dealer_credit = banker.processing(status, winner)
+    status, winner = who_won(gambler, dealer)
+    gambler_credit, dealer_credit = processing(status, winner)
     win_name = winner == :gambler ? gambler.name : :dealer
     interface.display_fin(status, win_name, gambler.name, gambler_credit, dealer_credit)
 
-    play if interface.again?
+    start_over if interface.again? && credit_check
   end
 
   def final_score
-    gamblers_score = gamblers_hand.tell_score
-    dealers_score = dealers_hand.tell_score
+    gamblers_score = gambler.hand.tell_score
+    dealers_score = dealer.hand.tell_score
 
     if blackjack?(gamblers_score)
       interface.blackjack(gambler.name)
@@ -78,13 +74,11 @@ class GameTable
   end
 
   def gambler_your_cards
-    gamblers_cards = depicture(gamblers_hand)
-    interface.display_card(gambler.name, gamblers_cards)
+    interface.display_card(gambler.name, gambler.hand)
   end
 
   def dealer_your_cards
-    dealers_cards = depicture(dealers_hand)
-    interface.display_card(:dealer, dealers_cards)
+    interface.display_card(:dealer, dealer.hand)
   end
 
   def mad?(player)
@@ -111,28 +105,41 @@ class GameTable
   end
 
   def gambler_takes_card
-    if blackjack?(gamblers_hand.tell_score)
+    if blackjack?(gambler.hand.tell_score)
       return interface.blackjack(gambler.name)
     end
 
-    deal(1, gambler, gamblers_hand, deck)
+    deal(1, gambler, gambler.hand, deck)
   end
 
   def dealer_play
     interface.player_hit(:dealer)
-    if dealer.decide?(dealers_hand) && two_cards?(dealers_hand)
-      deal(1, dealer, dealers_hand, deck)
+    if dealer.decide?(dealer.hand) && two_cards?(dealer.hand)
+      deal(1, dealer, dealer.hand, deck)
     end
     dealer_your_cards
     gambler_play_next
   end
 
   def gambler_play_next
-    if two_cards?(gamblers_hand) && no_blackjack?(gamblers_hand.tell_score)
+    if two_cards?(gambler.hand) && no_blackjack?(gambler.hand.tell_score)
       gambler_your_cards
       gambler_play(:next_menu)
     else
       round_end
     end
+  end
+
+  def two_cards?(hand)
+    hand.tell_length == 2
+  end
+
+  def new_deck
+    @deck = Deck.new
+    deck.shuffle_deck
+  end
+
+  def new_banker
+    @banker = Banker.new
   end
 end

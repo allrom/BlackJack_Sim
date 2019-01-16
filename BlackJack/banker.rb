@@ -18,16 +18,15 @@ class Banker
     @bank += 2 * BET
   end
 
-  def processing(status, player)
-    case status
-    when :win, :bust
-      player == :gambler ? @gambler_credit += bank : @dealer_credit += bank
-    when :tie
-      @gambler_credit += bank / 2
-      @dealer_credit += bank / 2
-    end
+  def pot(player)
+    player == :gambler ? @gambler_credit += bank : @dealer_credit += bank
     @bank = 0
-    [gambler_credit, dealer_credit]
+  end
+
+  def tie
+    @gambler_credit += bank / 2
+    @dealer_credit += bank / 2
+    @bank = 0
   end
 
   def money?(player)

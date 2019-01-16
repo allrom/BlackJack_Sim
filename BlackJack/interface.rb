@@ -1,6 +1,8 @@
 # Lesson10 (BlackJack) An Interface Class
 #
 class Interface
+  attr_reader :display
+
   GAMBLER_MENU_HEADER = "\n * Selection Menu. Enter correct menu digit *\n"
   GAMBLER_MENU_START = <<-MENU.freeze
     1:  Pass (Stay)
@@ -20,6 +22,7 @@ class Interface
   def initialize
     puts "\n\t * BlackJack Game simulator *"
     @play = true
+    @display = DisplayHelper.new
   end
 
   def go_on?
@@ -42,8 +45,9 @@ class Interface
   end
 
   def display_card(player, hand)
+    hand_cards = display.depicture(hand)
     puts "\n\tPlayer #{player} got these cards: "
-    hand.each { |card| print " | #{card}" }
+    hand_cards.each { |card| print " | #{card}" }
     print " |\n"
   end
 
